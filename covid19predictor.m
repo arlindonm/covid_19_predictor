@@ -4,7 +4,7 @@ clear
 %-----------------------------------------------------------------------
 %Input data
 %-----------------------------------------------------------------------
-country='Afghanistan';%'United States of America';
+country='United States of America';
 %-----------------------------------------------------------------------
 %import data
 data=importdata('WHO-COVID-19-global-data.csv');
