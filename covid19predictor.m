@@ -4,8 +4,7 @@ clear
 %-----------------------------------------------------------------------
 %Input data
 %-----------------------------------------------------------------------
-country='United States of America';
-gauss = 'gauss1'; 
+country='Afghanistan';%'United States of America';
 %-----------------------------------------------------------------------
 %import data
 data=importdata('WHO-COVID-19-global-data.csv');
@@ -30,8 +29,38 @@ h=ones(1,ma_order)/ma_order;                            %h of filter
 tcf =filtfilt(h,1,CumulativeConfirmed(first:ending));           
 dif = diff(tcf);                                        %filtered derivative
 t=0:ending-first-1;
-model = fit(t',dif,gauss);                              %fit gaussian model
-%--------------------------------------------------------------------------
+try
+    model = fit(t',dif,'gauss1');                              %fit gaussian model
+    gauss='gauss1';
+    %--------------------------------------------------------------------------
+    v=[];
+    predictionsDays=0;
+    while length(v) <1
+        gf=model(0:(ending-first+predictionsDays));         %gaussian prediction
+        [m,I]=max(gf);             
+        v=find(gf(I:end)<1);                                %find first day with cases less than 1
+        predictionsDays=predictionsDays+1;
+    end
+    dt=datetime(day1(first:ending));
+    dd=datetime((dt(end)+ days(1:predictionsDays)))';
+    dd.Format='dd-MMM-yyyy';
+    df=[dt;dd];
+    pos=v(1)+I-1;
+    dataending=df(pos);
+    disp(['first day with cases (gauss1) <1: ',datestr(dataending)]); 
+    gfacc=cumtrapz(gf);                                     %sigmoide (gaussian integration)
+    %--------------------------------------------------------------------------
+    
+
+    secDiff=diff(gf);
+    [m,I]=min(secDiff);
+    period=ending-first;
+catch
+    period=1;
+    I=0;
+end
+if(period>I)
+    model = fit(t',dif,'gauss2');                        %fit 2 gaussian model
 v=[];
 predictionsDays=0;
 while length(v) <1
@@ -46,8 +75,10 @@ dd.Format='dd-MMM-yyyy';
 df=[dt;dd];
 pos=v(1)+I-1;
 dataending=df(pos);
-disp(['first day with cases <1: ',datestr(dataending)]); 
+disp(['first day with cases (gauss2) <1: ',datestr(dataending)]); 
 gfacc=cumtrapz(gf);                                     %sigmoide (gaussian integration)
+gauss='gauss2';
+end
 %-----------------------------------------------------------------------
 %Graphics plot
 %-----------------------------------------------------------------------
@@ -70,5 +101,4 @@ xlabel('days after first case');
 ylabel('daily cases');
 legend('derivative',strcat(gauss,' fit'),'location','northwest');
 grid
-
 
